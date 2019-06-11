@@ -2,14 +2,11 @@
 
 from config import client
 from app import *
-# from bson.json_util import dumps
 from flask import request, jsonify
 import json
 import ast
 import imp
-from flask_jwt_extended import (create_access_token, create_refresh_token,
-                                jwt_required, jwt_refresh_token_required, get_jwt_identity)
-from app.schemas import validate_user
+from flask_jwt_extended import (jwt_required)
 
 # Import the helpers module
 helper_module = imp.load_source('*', './app/helpers.py')
@@ -24,10 +21,10 @@ collection = db.teams
 @jwt_required
 def create_team():
     """
-       Function to create new users.
+       Function to create new teams.
        """
     try:
-        # Create new users
+        # Create new teams
         try:
             body = ast.literal_eval(json.dumps(request.get_json()))
         except:
@@ -54,7 +51,7 @@ def create_team():
 @jwt_required
 def fetch_teams():
     """
-       Function to fetch the users.
+       Function to fetch the teams.
        """
     try:
         # Call the function to get the query params
@@ -83,7 +80,7 @@ def fetch_teams():
         else:
             # Return all the records as query string parameters are not available
             if collection.find().count() > 0:
-                # Prepare response if the users are found
+                # Prepare response if the teams are found
                 # return dumps(collection.find())
                 records_fetched = collection.find()
                 tdata = []
@@ -93,7 +90,7 @@ def fetch_teams():
                 # return jsonify(tdata)
                 return jsonify(tdata)
             else:
-                # Return empty array if no users are found
+                # Return empty array if no teams are found
                 return jsonify([])
     except Exception as err:
         # Error while trying to fetch the resource
@@ -105,7 +102,7 @@ def fetch_teams():
 @jwt_required
 def update_team(team_id):
     """
-       Function to update the user.
+       Function to update the team.
        """
     try:
         # Get the value which needs to be updated
@@ -116,7 +113,7 @@ def update_team(team_id):
             # Add message for debugging purpose
             return jsonify({'ok': False, 'message': 'No body', 'data': body}), 400
 
-        # Updating the user
+        # Updating the team
         records_updated = collection.update_one({"id": int(team_id)}, {"$set": body})
         # Check if resource is updated
         if records_updated.modified_count > 0:
@@ -136,10 +133,10 @@ def update_team(team_id):
 @jwt_required
 def remove_team(team_id):
     """
-       Function to remove the user.
+       Function to remove the team.
        """
     try:
-        # Delete the user
+        # Delete the team
         delete_team = collection.delete_one({"id": int(team_id)})
 
         if delete_team.deleted_count > 0 :
