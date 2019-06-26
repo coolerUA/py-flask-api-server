@@ -44,6 +44,8 @@ def create_team():
     except Exception as err:
         # Error while trying to create the resource
         # Add message for debugging purpose
+        app.logger.error('Data: ' +str(request.data))
+        app.logger.error('Exception: ' +str(err))
         return err, 500
 
 
@@ -95,6 +97,8 @@ def fetch_teams():
     except Exception as err:
         # Error while trying to fetch the resource
         # Add message for debugging purpose
+        app.logger.error('Data: ' +str(request.data))
+        app.logger.error('Exception: ' +str(err))
         return err, 500
 
 
@@ -111,7 +115,8 @@ def update_team(team_id):
         except:
             # Bad request as the request body is not available
             # Add message for debugging purpose
-            return jsonify({'ok': False, 'message': 'No body', 'data': body}), 400
+            app.logger.error('Bad body: ' + str(request.data))
+            return jsonify({'ok': False, 'message': 'No body', 'data': str(request.data)}), 400
 
         # Updating the team
         records_updated = collection.update_one({"id": int(team_id)}, {"$set": body})
@@ -126,6 +131,8 @@ def update_team(team_id):
     except Exception as err:
         # Error while trying to update the resource
         # Add message for debugging purpose
+        app.logger.error('Data: ' +str(request.data))
+        app.logger.error('Exception: ' +str(err))
         return err, 500
 
 
@@ -145,7 +152,9 @@ def remove_team(team_id):
         else:
             # Resource Not found
             return "", 404
-    except:
+    except Exception as err:
         # Error while trying to delete the resource
         # Add message for debugging purpose
+        app.logger.error('Data: ' +str(request.data))
+        app.logger.error('Exception: ' +str(err))
         return "", 500

@@ -39,8 +39,11 @@ def upload_file():
             return jsonify({'ok': False, 'message': "Empty filename"}), 424
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return jsonify({'ok': True, 'url': str(request.scheme+"://"+request.host+"/images/"+filename)}), 200
+            if os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], filename)):
+                return jsonify({'ok': True, 'url': str(request.scheme + "://" + request.host + "/images/" + filename), 'message': "File exists"}), 424
+            else:
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                return jsonify({'ok': True, 'url': str(request.scheme+"://"+request.host+"/images/"+filename)}), 200
 
     if request.method == 'DELETE':
         try:

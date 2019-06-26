@@ -26,7 +26,10 @@ jwt = JWTManager(app)
 app.json_encoder = JSONEncoder
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+from app import auth
 from app import usersData
 from app import teamsData
 from app import pictures
+from app import queue
+from app import campaigns
 from app.controllers import *

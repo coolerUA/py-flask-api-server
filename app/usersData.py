@@ -9,7 +9,7 @@ import ast
 import imp
 from flask_jwt_extended import (create_access_token, create_refresh_token,
                                 jwt_required, jwt_refresh_token_required, get_jwt_identity)
-from app.schemas import validate_user
+
 
 # Import the helpers module
 helper_module = imp.load_source('*', './app/helpers.py')
@@ -29,72 +29,6 @@ def unauthorized_response(callback):
     }), 401
 
 
-@app.route('/api/v1/auth', methods=['POST'])
-def auth_user():
-    ''' auth endpoint '''
-    data = validate_user(request.get_json())
-    if data['ok']:
-        data = data['data']
-        user = db.admin.find_one({'email': data['email']}, {"_id": 0})
-        if user and flask_bcrypt.check_password_hash(user['password'], data['password']):
-            try:
-                if user['isadmin'] == 1:
-                    del user['password']
-                    access_token = create_access_token(identity=data)
-                    refresh_token = create_refresh_token(identity=data)
-                    user['token'] = access_token
-                    user['refresh'] = refresh_token
-                    return jsonify({'ok': True, 'data': user}), 200
-                else:
-                    return jsonify({'ok': False, 'message': 'No rights'}), 400
-            except KeyError:
-                return jsonify({'ok': False, 'message': 'No rights'}), 400
-        else:
-            return jsonify({'ok': False, 'message': 'invalid username or password'}), 401
-    else:
-        return jsonify({'ok': False, 'message': 'Bad request parameters: {}'.format(data['message'])}), 400
-
-
-@app.route('/api/v1/register', methods=['POST'])
-def register():
-    ''' register user endpoint '''
-    data = validate_user(request.get_json())
-    if data['ok']:
-        data = data['data']
-        data['password'] = flask_bcrypt.generate_password_hash(
-            data['password'])
-        db.admin.insert_one(data)
-        return jsonify({'ok': True, 'message': 'User created successfully!'}), 200
-    else:
-        return jsonify({'ok': False, 'message': 'Bad request parameters: {}'.format(data['message'])}), 400
-
-
-@app.route('/api/v1/refresh', methods=['POST'])
-@jwt_refresh_token_required
-def refresh():
-    ''' refresh token endpoint '''
-    current_user = get_jwt_identity()
-    ret = {
-        'token': create_access_token(identity=current_user)
-    }
-    return jsonify({'ok': True, 'data': ret}), 200
-
-
-@app.route("/")
-def get_initial_response():
-    """Welcome message for the API."""
-    # Message to the user
-    message = {
-        'apiVersion': 'v1.0',
-        'status': '200',
-        'message': 'Welcome to the Flask API'
-    }
-    # Making the message looks good
-    resp = jsonify(message)
-    # Returning the object
-    return resp
-
-
 @app.route("/api/v1/users", methods=['POST'])
 @jwt_required
 def create_user():
@@ -108,6 +42,7 @@ def create_user():
         except:
             # Bad request as request body is not available
             # Add message for debugging purpose
+            app.logger.error('bad body: '+str(request.data))
             return "", 400
 
         record_created = collection.insert(body)
@@ -122,6 +57,8 @@ def create_user():
     except Exception as err:
         # Error while trying to create the resource
         # Add message for debugging purpose
+        app.logger.error('Data: ' +str(request.data))
+        app.logger.error('Exception: ' +str(err))
         return err, 500
 
 
@@ -146,12 +83,9 @@ def fetch_users():
             if records_fetched.count() > 0:
                 # Prepare the response
                 # return dumps(records_fetched)
-
                 tdata = []
                 for data in records_fetched:
-                    # tdata.append(JSONEncoder().encode(data))
                     tdata.append(data)
-                # return jsonify(tdata)
                 return jsonify(tdata)
 
             else:
@@ -177,6 +111,8 @@ def fetch_users():
     except Exception as err:
         # Error while trying to fetch the resource
         # Add message for debugging purpose
+        app.logger.error('Data: ' +str(request.data))
+        app.logger.error('Exception: ' +str(err))
         return err, 500
 
 
@@ -193,8 +129,9 @@ def update_user(user_id):
         except:
             # Bad request as the request body is not available
             # Add message for debugging purpose
-            return jsonify({'ok': False, 'message': 'No body', 'data': body}), 400
-
+            app.logger.error('Bad body ' + str(request.data))
+            return jsonify({'ok': False, 'message': 'No body', 'data': str(request.data)}), 400
+        app.logger.error('Data: ' +str(request.data))
         # Updating the user
         records_updated = collection.update_one({"id": int(user_id)}, {"$set": body})
         # Check if resource is updated
@@ -206,6 +143,8 @@ def update_user(user_id):
             # Add message for debugging purpose
             return jsonify({'ok': False, 'message': 'Not Found', 'data': body}), 404
     except Exception as err:
+        app.logger.error('Data: ' +str(request.data))
+        app.logger.error('Exception: ' +str(err))
         # Error while trying to update the resource
         # Add message for debugging purpose
         return err, 500
@@ -227,9 +166,11 @@ def remove_user(user_id):
         else:
             # Resource Not found
             return "", 404
-    except:
+    except Exception as err:
         # Error while trying to delete the resource
         # Add message for debugging purpose
+        app.logger.error('Data: ' +str(request.data))
+        app.logger.error('Exception: ' +str(err))
         return "", 500
 
 
