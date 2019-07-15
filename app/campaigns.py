@@ -46,7 +46,7 @@ def fetch_campaigns():
 
         else:
             # No records are found
-            return jsonify([]), 404
+            return jsonify([]), 200
         # Check if the records are found
         # record_fetched = collection.find_one()
         # if record_fetched:
@@ -126,6 +126,30 @@ def update_campaigns(campaign_id):
         app.logger.error('Data: ' + str(request.data))
         app.logger.error('Exception: ' + str(err))
         return err, 500
+
+
+@app.route("/api/v1/campaigns/<campaign_id>", methods=['DELETE'])
+@jwt_required
+def remove_campaign(campaign_id):
+    """
+       Function to remove the campaign.
+       """
+    try:
+        # Delete the user
+        delete_campaign = collection.delete_one({"id": int(campaign_id)})
+
+        if delete_campaign.deleted_count > 0:
+            # Prepare the response
+            return "", 204
+        else:
+            # Resource Not found
+            return jsonify([]), 200
+    except Exception as err:
+        # Error while trying to delete the resource
+        # Add message for debugging purpose
+        app.logger.error('Data: ' +str(request.data))
+        app.logger.error('Exception: ' +str(err))
+        return "", 500
 
 
 @app.errorhandler(404)

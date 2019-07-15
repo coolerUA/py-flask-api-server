@@ -3,6 +3,7 @@
 from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
+from werkzeug.contrib.fixers import ProxyFix
 from bson import ObjectId
 import json
 import datetime
@@ -21,6 +22,7 @@ UPLOAD_FOLDER = '/opt/dashboard/flask/static'
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 'secret'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
+app.wsgi_app = ProxyFix(app.wsgi_app)
 flask_bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 app.json_encoder = JSONEncoder

@@ -46,7 +46,7 @@ def fetch_queue():
 
         else:
             # No records are found
-            return jsonify([]), 404
+            return jsonify([]), 200
         # Check if the records are found
         # record_fetched = collection.find_one()
         # if record_fetched:
@@ -127,6 +127,29 @@ def update_queue(queue_id):
         app.logger.error('Exception: ' + str(err))
         return err, 500
 
+
+@app.route("/api/v1/queue/<queue_id>", methods=['DELETE'])
+@jwt_required
+def remove_queue(queue_id):
+    """
+       Function to remove the queue.
+       """
+    try:
+        # Delete the user
+        delete_queue = collection.delete_one({"id": int(queue_id)})
+
+        if delete_queue.deleted_count > 0 :
+            # Prepare the response
+            return "", 204
+        else:
+            # Resource Not found
+            return "", 404
+    except Exception as err:
+        # Error while trying to delete the resource
+        # Add message for debugging purpose
+        app.logger.error('Data: ' +str(request.data))
+        app.logger.error('Exception: ' +str(err))
+        return "", 500
 
 @app.errorhandler(404)
 def page_not_found(e):
